@@ -1,4 +1,4 @@
-package rabbitmq
+package producer
 
 type QueueConfig struct {
 	Name         string

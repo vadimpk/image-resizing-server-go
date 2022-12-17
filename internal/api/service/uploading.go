@@ -6,10 +6,10 @@ import (
 )
 
 type UploadingService struct {
-	queue publisher.Queue
+	publisher publisher.Publisher
 }
 
-func NewUploadingService(queue publisher.Queue) *UploadingService {
+func NewUploadingService(queue publisher.Publisher) *UploadingService {
 	return &UploadingService{queue}
 }
 
@@ -23,7 +23,7 @@ func (s *UploadingService) Upload(file []byte) (string, error) {
 			"img-type": "jpeg",
 			"id":       id,
 		}
-		s.queue.PublishImage(context.Background(), file, headers)
+		s.publisher.PublishImage(context.Background(), file, headers)
 	}()
 
 	return id, nil

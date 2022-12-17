@@ -2,6 +2,6 @@ package publisher
 
 import "context"
 
-type Queue interface {
+type Publisher interface {
 	PublishImage(ctx context.Context, body []byte, headers map[string]interface{})
 }

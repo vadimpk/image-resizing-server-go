@@ -18,9 +18,9 @@ type Downloading interface {
 	Download(ID string) ([]byte, error) // TODO: return image instead of bytes
 }
 
-func NewServices(queue publisher.Queue, repository *repository.Repository) *Services {
+func NewServices(publisher publisher.Publisher, repository *repository.Repository) *Services {
 	return &Services{
-		Uploading:   NewUploadingService(queue),
+		Uploading:   NewUploadingService(publisher),
 		Downloading: NewDownloadingService(repository),
 	}
 }

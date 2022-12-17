@@ -7,7 +7,7 @@ import (
 	"github.com/vadimpk/image-resizing-server-go/internal/api/server"
 	"github.com/vadimpk/image-resizing-server-go/internal/api/service"
 	"github.com/vadimpk/image-resizing-server-go/pkg/queue/rabbitmq"
-	rabbitmqprod "github.com/vadimpk/image-resizing-server-go/pkg/queue/rabbitmq/producer"
+	"github.com/vadimpk/image-resizing-server-go/pkg/queue/rabbitmq/producer"
 	"log"
 )
 
@@ -18,8 +18,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var q publisher.Queue
-	q, err = rabbitmqprod.NewProducer(rabbit, rabbitmqprod.QueueConfig{
+	var p publisher.Publisher
+	p, err = producer.NewProducer(rabbit, producer.QueueConfig{
 		Name:         "test",
 		Durable:      false,
 		DeleteUnused: false,
@@ -30,7 +30,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	services := service.NewServices(q, repository.NewRepository())
+	services := service.NewServices(p, repository.NewRepository())
 
 	handler := http.NewHandler(services)
 	r := handler.Init()
