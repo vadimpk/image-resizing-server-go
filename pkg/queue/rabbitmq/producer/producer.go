@@ -58,8 +58,6 @@ func (p *Producer) Publish(ctx context.Context, body []byte, headers map[string]
 	p.rabbit.Wg.Add(1)
 	defer p.rabbit.Wg.Done()
 
-	time.Sleep(10 * time.Second)
-
 	err := p.rabbit.Channel.PublishWithContext(
 		ctx,
 		"",
@@ -88,5 +86,6 @@ func (p *Producer) Publish(ctx context.Context, body []byte, headers map[string]
 		log.Printf("Couldn't publish message to %s publisher: [%s]\n", p.routingKey, err)
 		return err
 	}
+	log.Println("Message published")
 	return nil
 }
