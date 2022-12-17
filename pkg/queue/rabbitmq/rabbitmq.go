@@ -1,9 +1,10 @@
 package rabbitmq
 
 import (
-	"errors"
+	"context"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -12,14 +13,26 @@ const (
 	_backOffSeconds = 2
 )
 
-func NewRabbitMQConn(rabbitMqURL string) (*amqp.Connection, error) {
+type RabbitMQ struct {
+	Conn    *amqp.Connection
+	Channel *amqp.Channel
+	Wg      *sync.WaitGroup
+}
 
-	var amqpConn *amqp.Connection
+func NewRabbitMQ() *RabbitMQ {
+	return &RabbitMQ{
+		Wg: &sync.WaitGroup{},
+	}
+}
+
+func (r *RabbitMQ) Connect(rabbitMqURL string) error {
+
+	var conn *amqp.Connection
 	count := 0
 	for {
 		connection, err := amqp.Dial(rabbitMqURL)
 		if err == nil {
-			amqpConn = connection
+			conn = connection
 			break
 		}
 
@@ -27,7 +40,7 @@ func NewRabbitMQConn(rabbitMqURL string) (*amqp.Connection, error) {
 		count++
 
 		if count > _retryTimes {
-			return nil, errors.New("couldn't connect to RabbitMQ")
+			return err
 		}
 
 		log.Printf("Retrying in %d seconds ...", _backOffSeconds)
@@ -36,5 +49,52 @@ func NewRabbitMQConn(rabbitMqURL string) (*amqp.Connection, error) {
 
 	log.Println("Connected to RabbitMQ!")
 
-	return amqpConn, nil
+	ch, err := conn.Channel()
+	if err != nil {
+		log.Printf("Couldn't open RabbitMQ channel: [%s]\n", err)
+		return err
+	}
+
+	r.Conn = conn
+	r.Channel = ch
+	return nil
+}
+
+// Close gracefully closes the rabbitMQ connection, trying to finish all the jobs first
+// Returns done channel that notifies when all connections are closed
+func (r *RabbitMQ) Close(ctx context.Context) chan struct{} {
+	done := make(chan struct{})
+
+	doneWaiting := make(chan struct{})
+	go func() {
+		r.Wg.Wait()
+		close(doneWaiting)
+	}()
+
+	go func() {
+		defer close(done)
+		select { // either waits for the messages to process or timeout from context
+		case <-doneWaiting:
+		case <-ctx.Done():
+		}
+		r.closeConnections()
+	}()
+
+	return done
+}
+
+func (r *RabbitMQ) closeConnections() {
+	if r.Channel != nil {
+		err := r.Channel.Close()
+		if err != nil {
+			log.Printf("error closing channel: [%s]\n", err)
+		}
+	}
+
+	if r.Conn != nil {
+		err := r.Conn.Close()
+		if err != nil {
+			log.Printf("error closing connection: [%s]\n", err)
+		}
+	}
 }

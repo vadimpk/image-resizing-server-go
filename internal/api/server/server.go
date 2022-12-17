@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 )
@@ -35,10 +36,22 @@ func NewServer(handler http.Handler) *Server {
 	}
 }
 
-func (s *Server) Run() error {
-	return s.server.ListenAndServe()
+func (s *Server) Run() {
+	go func() {
+		log.Println("Starting http server...")
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("couldn't start the server: [%s]\n", err)
+		}
+	}()
 }
 
-func (s *Server) Stop(ctx context.Context) error {
-	return s.server.Shutdown(ctx)
+func (s *Server) Stop(ctx context.Context) chan struct{} {
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		if err := s.server.Shutdown(ctx); err != nil {
+			log.Printf("couldn't shutdown http server: [%s]\n", err)
+		}
+	}()
+	return done
 }

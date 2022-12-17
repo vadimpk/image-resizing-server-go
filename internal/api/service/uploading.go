@@ -23,7 +23,7 @@ func (s *UploadingService) Upload(file []byte) (string, error) {
 			"img-type": "jpeg",
 			"id":       id,
 		}
-		s.publisher.PublishImage(context.Background(), file, headers)
+		s.publisher.Publish(context.Background(), file, headers)
 	}()
 
 	return id, nil

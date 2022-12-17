@@ -3,5 +3,6 @@ package publisher
 import "context"
 
 type Publisher interface {
-	PublishImage(ctx context.Context, body []byte, headers map[string]interface{})
+	Publish(ctx context.Context, body []byte, headers map[string]interface{}) error
+	Close(ctx context.Context) chan struct{}
 }
