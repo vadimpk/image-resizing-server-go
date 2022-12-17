@@ -1,0 +1,7 @@
+rabbitmq-img-queue:
+  name: "img-queue"
+  durable: true
+  delete-unused: false
+  exclusive: false
+  no-wait: false
+  prefetch-count: 1

@@ -1,0 +1,9 @@
+http:
+  port: 8080
+  maxHeaderBytes: 1
+  readTimeout: 30s
+  writeTimeout: 30s
+  
+rabbitmq:
+  url: "amqp://guest:guest@localhost:"
+  port: 5672

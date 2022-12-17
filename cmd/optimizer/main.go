@@ -27,14 +27,7 @@ func main() {
 	}
 
 	var c consumer.Consumer
-	c, err = rabbitconsumer.NewConsumer(rabbit, rabbitconsumer.QueueConfig{
-		Name:          "test",
-		Durable:       false,
-		DeleteUnused:  false,
-		Exclusive:     false,
-		NoWait:        false,
-		PrefetchCount: 1,
-	})
+	c, err = rabbitconsumer.NewConsumer(rabbit)
 	if err != nil {
 		log.Fatal(err)
 	}

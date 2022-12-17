@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/vadimpk/image-resizing-server-go/internal/api/config"
 	"github.com/vadimpk/image-resizing-server-go/internal/api/delivery/http"
 	"github.com/vadimpk/image-resizing-server-go/internal/api/publisher"
 	"github.com/vadimpk/image-resizing-server-go/internal/api/repository"
@@ -18,20 +19,19 @@ import (
 
 func main() {
 
+	cfg, err := config.Init("configs/main")
+	if err != nil {
+		log.Fatalf("couldn't parse config: [%s]\n", err)
+	}
+
 	rabbit := rabbitmq.NewRabbitMQ()
-	err := rabbit.Connect("amqp://guest:guest@localhost:5672/")
+	err = rabbit.Connect(cfg.Rabbit.URL + cfg.Rabbit.Port + "/")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	var p publisher.Publisher
-	p, err = producer.NewProducer(rabbit, producer.QueueConfig{
-		Name:         "test",
-		Durable:      false,
-		DeleteUnused: false,
-		Exclusive:    false,
-		NoWait:       false,
-	})
+	p, err = producer.NewProducer(rabbit)
 	if err != nil {
 		log.Fatal(err)
 	}

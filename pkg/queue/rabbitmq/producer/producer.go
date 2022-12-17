@@ -14,7 +14,13 @@ type Producer struct {
 	routingKey string
 }
 
-func NewProducer(rabbit *rabbitmq.RabbitMQ, queueConfig QueueConfig) (*Producer, error) {
+func NewProducer(rabbit *rabbitmq.RabbitMQ) (*Producer, error) {
+
+	cfg, err := Init("configs/queues")
+	if err != nil {
+		log.Println("couldn't init rabbitmq/producer config")
+		return nil, err
+	}
 
 	// TODO: try to create new
 	if rabbit.Channel == nil {
@@ -22,11 +28,11 @@ func NewProducer(rabbit *rabbitmq.RabbitMQ, queueConfig QueueConfig) (*Producer,
 	}
 
 	q, err := rabbit.Channel.QueueDeclare(
-		queueConfig.Name,
-		queueConfig.Durable,
-		queueConfig.DeleteUnused,
-		queueConfig.Exclusive,
-		queueConfig.NoWait,
+		cfg.Name,
+		cfg.Durable,
+		cfg.DeleteUnused,
+		cfg.Exclusive,
+		cfg.NoWait,
 		nil,
 	)
 	if err != nil {

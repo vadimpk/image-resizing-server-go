@@ -12,7 +12,13 @@ type Consumer struct {
 	routingKey string
 }
 
-func NewConsumer(rabbit *rabbitmq.RabbitMQ, queueConfig QueueConfig) (*Consumer, error) {
+func NewConsumer(rabbit *rabbitmq.RabbitMQ) (*Consumer, error) {
+
+	cfg, err := Init("configs/queues")
+	if err != nil {
+		log.Println("couldn't init rabbitmq/producer config")
+		return nil, err
+	}
 
 	// TODO: try to create new
 	if rabbit.Channel == nil {
@@ -20,11 +26,11 @@ func NewConsumer(rabbit *rabbitmq.RabbitMQ, queueConfig QueueConfig) (*Consumer,
 	}
 
 	q, err := rabbit.Channel.QueueDeclare(
-		queueConfig.Name,
-		queueConfig.Durable,
-		queueConfig.DeleteUnused,
-		queueConfig.Exclusive,
-		queueConfig.NoWait,
+		cfg.Name,
+		cfg.Durable,
+		cfg.DeleteUnused,
+		cfg.Exclusive,
+		cfg.NoWait,
 		nil,
 	)
 	if err != nil {
@@ -32,7 +38,7 @@ func NewConsumer(rabbit *rabbitmq.RabbitMQ, queueConfig QueueConfig) (*Consumer,
 		return nil, err
 	}
 
-	err = rabbit.Channel.Qos(queueConfig.PrefetchCount, 0, false)
+	err = rabbit.Channel.Qos(cfg.PrefetchCount, 0, false)
 	if err != nil {
 		log.Printf("Couldn't set Qos: [%s]\n", err)
 		return nil, err
