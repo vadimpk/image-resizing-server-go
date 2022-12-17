@@ -1,11 +1,13 @@
 package service
 
+import "github.com/vadimpk/image-resizing-server-go/internal/api/repository"
+
 type DownloadingService struct {
-	// repo
+	repo *repository.Repository
 }
 
-func NewDownloadingService() *DownloadingService {
-	return &DownloadingService{}
+func NewDownloadingService(repository *repository.Repository) *DownloadingService {
+	return &DownloadingService{repository}
 }
 
 func (s *DownloadingService) Download(ID string) ([]byte, error) {

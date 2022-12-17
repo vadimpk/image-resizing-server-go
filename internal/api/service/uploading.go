@@ -1,20 +1,30 @@
 package service
 
+import (
+	"context"
+	"github.com/vadimpk/image-resizing-server-go/internal/api/publisher"
+)
+
 type UploadingService struct {
-	// publisher
+	queue publisher.Queue
 }
 
-func NewUploadingService() *UploadingService {
-	return &UploadingService{}
+func NewUploadingService(queue publisher.Queue) *UploadingService {
+	return &UploadingService{queue}
 }
 
 func (s *UploadingService) Upload(file []byte) (string, error) {
 
+	// TODO: generate id
+	id := "id"
+
 	go func() {
-		// publish
+		headers := map[string]interface{}{
+			"img-type": "jpeg",
+			"id":       id,
+		}
+		s.queue.PublishImage(context.Background(), file, headers)
 	}()
 
-	// TODO: generate id
-
-	return "id", nil
+	return id, nil
 }
