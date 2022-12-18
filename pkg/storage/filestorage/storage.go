@@ -2,6 +2,7 @@ package filestorage
 
 import (
 	"context"
+	"os"
 	"sync"
 )
 
@@ -11,6 +12,7 @@ type Storage struct {
 }
 
 func NewStorage(dirPath string) *Storage {
+	_ = os.Mkdir(dirPath, os.ModePerm)
 	return &Storage{dir: dirPath, wg: &sync.WaitGroup{}}
 }
 
