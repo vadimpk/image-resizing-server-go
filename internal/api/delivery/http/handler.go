@@ -19,8 +19,7 @@ type Handler struct {
 }
 
 var (
-	ErrInvalidContentType = errors.New("content type is not supported")
-	ErrFileNotFound       = errors.New("file couldn't be found")
+	ErrFileNotFound = errors.New("file couldn't be found")
 )
 
 func NewHandler(services *service.Services, maxFileSizeMB int64) *Handler {
@@ -58,7 +57,7 @@ func (h *Handler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.service.Upload(file)
 	if err != nil {
-		if err == ErrInvalidContentType {
+		if err == service.ErrInvalidContentType {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -115,7 +114,7 @@ func (h *Handler) HandleDownload(w http.ResponseWriter, r *http.Request) {
 func determineContentType(filename string) (string, error) {
 	parts := strings.Split(filename, ".")
 	if len(parts) != 2 {
-		return "", ErrInvalidContentType
+		return "", service.ErrInvalidContentType
 	}
 	switch parts[1] {
 	case "jpeg", "jpg":
@@ -123,6 +122,6 @@ func determineContentType(filename string) (string, error) {
 	case "png":
 		return "image/png", nil
 	default:
-		return "", ErrInvalidContentType
+		return "", service.ErrInvalidContentType
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"github.com/teris-io/shortid"
-	http2 "github.com/vadimpk/image-resizing-server-go/internal/api/delivery/http"
 	"github.com/vadimpk/image-resizing-server-go/internal/api/publisher"
 	"io/ioutil"
 	"log"
@@ -16,6 +15,8 @@ type UploadingService struct {
 	publisher publisher.Publisher
 	sid       *shortid.Shortid
 }
+
+var ErrInvalidContentType = errors.New("content type is not supported")
 
 func NewUploadingService(publisher publisher.Publisher, sid *shortid.Shortid) *UploadingService {
 	return &UploadingService{publisher, sid}
@@ -36,7 +37,7 @@ func (s *UploadingService) Upload(file multipart.File) (string, error) {
 	case "image/jpeg", "image/png":
 		break
 	default:
-		return "", http2.ErrInvalidContentType
+		return "", ErrInvalidContentType
 	}
 
 	// generating id
