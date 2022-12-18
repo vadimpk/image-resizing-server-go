@@ -18,6 +18,11 @@ type Handler struct {
 	maxFileSizeMB int64
 }
 
+var (
+	ErrInvalidContentType = errors.New("content type is not supported")
+	ErrFileNotFound       = errors.New("file couldn't be found")
+)
+
 func NewHandler(services *service.Services, maxFileSizeMB int64) *Handler {
 	return &Handler{services, maxFileSizeMB}
 }
@@ -43,6 +48,7 @@ func (h *Handler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 	file, headers, err := r.FormFile("file")
 	if err != nil {
 		log.Printf("Error receiving file: [%s]", err)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -52,14 +58,18 @@ func (h *Handler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.service.Upload(file)
 	if err != nil {
-		log.Printf("Error uploading file: [%s]", err)
+		if err == ErrInvalidContentType {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		log.Printf("error uploading file: [%s]", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	_, err = w.Write([]byte(id))
 	if err != nil {
-		log.Printf("Error writing response: [%s]", err)
+		log.Printf("error writing response: [%s]", err)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -82,6 +92,10 @@ func (h *Handler) HandleDownload(w http.ResponseWriter, r *http.Request) {
 
 	d, filename, err := h.service.Download(id, resolution)
 	if err != nil {
+		if err == ErrFileNotFound {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -101,7 +115,7 @@ func (h *Handler) HandleDownload(w http.ResponseWriter, r *http.Request) {
 func determineContentType(filename string) (string, error) {
 	parts := strings.Split(filename, ".")
 	if len(parts) != 2 {
-		return "", errors.New("couldn't determine content type")
+		return "", ErrInvalidContentType
 	}
 	switch parts[1] {
 	case "jpeg", "jpg":
@@ -109,6 +123,6 @@ func determineContentType(filename string) (string, error) {
 	case "png":
 		return "image/png", nil
 	default:
-		return "", errors.New("couldn't determine content type")
+		return "", ErrInvalidContentType
 	}
 }

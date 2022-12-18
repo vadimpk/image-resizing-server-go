@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/teris-io/shortid"
+	http2 "github.com/vadimpk/image-resizing-server-go/internal/api/delivery/http"
 	"github.com/vadimpk/image-resizing-server-go/internal/api/publisher"
 	"io/ioutil"
 	"log"
@@ -20,10 +21,6 @@ func NewUploadingService(publisher publisher.Publisher, sid *shortid.Shortid) *U
 	return &UploadingService{publisher, sid}
 }
 
-var (
-	ErrTypeIsNotSupported = errors.New("type is not supported")
-)
-
 func (s *UploadingService) Upload(file multipart.File) (string, error) {
 
 	// reading file
@@ -39,7 +36,7 @@ func (s *UploadingService) Upload(file multipart.File) (string, error) {
 	case "image/jpeg", "image/png":
 		break
 	default:
-		return "", ErrTypeIsNotSupported
+		return "", http2.ErrInvalidContentType
 	}
 
 	// generating id
@@ -57,7 +54,7 @@ func (s *UploadingService) Upload(file multipart.File) (string, error) {
 		if err != nil {
 			log.Printf("couldn't publish image: [%s]\n", err)
 		}
-		//TODO: if error - add id to special list, and when request comes for download, say there was some error
+		//TODO: if error - add id to special list, and when request comes for download, say there was some error uploading
 	}()
 
 	return id, nil

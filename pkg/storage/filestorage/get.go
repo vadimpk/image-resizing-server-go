@@ -1,14 +1,10 @@
 package filestorage
 
 import (
-	"errors"
+	"github.com/vadimpk/image-resizing-server-go/internal/api/delivery/http"
 	"io/ioutil"
 	"os"
 	"strings"
-)
-
-var (
-	ErrFileNotFound = errors.New("file with such id couldn't be found")
 )
 
 func (s *Storage) Get(id string, resolution int) ([]byte, string, error) {
@@ -18,14 +14,14 @@ func (s *Storage) Get(id string, resolution int) ([]byte, string, error) {
 	dir := s.dir + id + "/"
 	if _, err := os.Stat(dir); err != nil {
 		if err == os.ErrNotExist {
-			return nil, "", ErrFileNotFound
+			return nil, "", http.ErrFileNotFound
 		}
 		return nil, "", err
 	}
 
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		return nil, "", ErrFileNotFound
+		return nil, "", http.ErrFileNotFound
 	}
 
 	for _, file := range files {
@@ -39,5 +35,5 @@ func (s *Storage) Get(id string, resolution int) ([]byte, string, error) {
 		}
 	}
 
-	return nil, "", ErrFileNotFound
+	return nil, "", http.ErrFileNotFound
 }
