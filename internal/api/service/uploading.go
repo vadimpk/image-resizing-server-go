@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"mime/multipart"
+	"net/http"
 )
 
 type UploadingService struct {
@@ -19,24 +20,37 @@ func NewUploadingService(publisher publisher.Publisher, sid *shortid.Shortid) *U
 	return &UploadingService{publisher, sid}
 }
 
-func (s *UploadingService) Upload(file multipart.File, headers *multipart.FileHeader) (string, error) {
+var (
+	ErrTypeIsNotSupported = errors.New("type is not supported")
+)
 
-	//TODO: check image type compatability with service (jpeg/png)
+func (s *UploadingService) Upload(file multipart.File) (string, error) {
 
+	// reading file
+	bytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Printf("error reading file: [%s]", err)
+		return "", err
+	}
+
+	// determining content type
+	contentType := http.DetectContentType(bytes)
+	switch contentType {
+	case "image/jpeg", "image/png":
+		break
+	default:
+		return "", ErrTypeIsNotSupported
+	}
+
+	// generating id
 	id, err := s.sid.Generate()
 	if err != nil {
 		return "", errors.New("couldn't generate id")
 	}
 
 	go func() {
-		bytes, err := ioutil.ReadAll(file)
-		if err != nil {
-			log.Printf("Error reading file: [%s]", err)
-			return
-		}
-
 		h := map[string]interface{}{
-			"img-type": headers.Header.Get("Content-Type"),
+			"img-type": contentType,
 			"id":       id,
 		}
 		err = s.publisher.Publish(context.Background(), bytes, h)

@@ -42,7 +42,7 @@ func (h *Handler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 	log.Printf("File Size: %+v\n", headers.Size)
 	log.Printf("MIME Header: %+v\n", headers.Header)
 
-	id, err := h.service.Upload(file, headers)
+	id, err := h.service.Upload(file)
 	if err != nil {
 		log.Printf("Error uploading file: [%s]", err)
 		w.WriteHeader(http.StatusInternalServerError)

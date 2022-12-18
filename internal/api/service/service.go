@@ -13,7 +13,7 @@ type Services struct {
 }
 
 type Uploading interface {
-	Upload(file multipart.File, headers *multipart.FileHeader) (string, error)
+	Upload(file multipart.File) (string, error)
 }
 
 type Downloading interface {
