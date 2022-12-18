@@ -56,7 +56,7 @@ func closeFile(file *os.File) {
 }
 
 func (s *Storage) getImgName(id string, resolution int) string {
-	if resolution < 100 {
+	if resolution != 100 {
 		return id + "-" + strconv.Itoa(resolution)
 	}
 	return id

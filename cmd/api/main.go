@@ -11,6 +11,7 @@ import (
 	"github.com/vadimpk/image-resizing-server-go/internal/api/service"
 	"github.com/vadimpk/image-resizing-server-go/pkg/queue/rabbitmq"
 	"github.com/vadimpk/image-resizing-server-go/pkg/queue/rabbitmq/producer"
+	"github.com/vadimpk/image-resizing-server-go/pkg/storage/filestorage"
 	"log"
 	"os"
 	"os/signal"
@@ -42,7 +43,10 @@ func main() {
 		log.Fatalf("couldn't start random id generator: [%s]\n", err)
 	}
 
-	services := service.NewServices(p, repository.NewRepository(), sid)
+	var repo repository.Repository
+	repo = filestorage.NewStorage()
+
+	services := service.NewServices(p, repo, sid)
 
 	handler := http.NewHandler(services)
 	r := handler.Init()

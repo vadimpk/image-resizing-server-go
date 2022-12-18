@@ -1,10 +1,16 @@
 package http
 
 import (
+	"bytes"
+	"errors"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/vadimpk/image-resizing-server-go/internal/api/service"
+	"io"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 type Handler struct {
@@ -19,6 +25,7 @@ func (h *Handler) Init() http.Handler {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/upload", h.HandleUpload)
+	r.HandleFunc("/download/{id}", h.HandleDownload)
 
 	return r
 }
@@ -54,5 +61,53 @@ func (h *Handler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing response: [%s]", err)
 		w.WriteHeader(http.StatusOK)
 		return
+	}
+}
+
+func (h *Handler) HandleDownload(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	quality := r.URL.Query().Get("quality")
+
+	if quality == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	resolution, err := strconv.Atoi(quality)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	d, filename, err := h.service.Download(id, resolution)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	ct, err := determineContentType(filename)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", ct)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+
+	io.Copy(w, bytes.NewReader(d))
+}
+
+func determineContentType(filename string) (string, error) {
+	parts := strings.Split(filename, ".")
+	if len(parts) != 2 {
+		return "", errors.New("couldn't determine content type")
+	}
+	switch parts[1] {
+	case "jpeg", "jpg":
+		return "image/jpeg", nil
+	case "png":
+		return "image/png", nil
+	default:
+		return "", errors.New("couldn't determine content type")
 	}
 }
