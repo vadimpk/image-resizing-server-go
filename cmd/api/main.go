@@ -68,7 +68,7 @@ func main() {
 // shutdown gracefully stops all services after given timeout
 func shutdown(cancel context.CancelFunc, timeout time.Duration) {
 	cancel()
-	ctx, cancelTimeout := context.WithTimeout(context.Background(), time.Second*timeout)
+	ctx, cancelTimeout := context.WithTimeout(context.Background(), timeout)
 	defer cancelTimeout()
 
 	doneHTTP := srv.Stop(ctx)
