@@ -10,6 +10,6 @@ func NewDownloadingService(repository *repository.Repository) *DownloadingServic
 	return &DownloadingService{repository}
 }
 
-func (s *DownloadingService) Download(ID string) ([]byte, error) {
+func (s *DownloadingService) Download(id string) ([]byte, error) {
 	return nil, nil
 }

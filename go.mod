@@ -6,6 +6,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/rabbitmq/amqp091-go v1.5.0
 	github.com/spf13/viper v1.14.0
+	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569
 )
 
 require (

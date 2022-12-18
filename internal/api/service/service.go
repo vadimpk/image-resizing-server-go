@@ -1,8 +1,10 @@
 package service
 
 import (
+	"github.com/teris-io/shortid"
 	"github.com/vadimpk/image-resizing-server-go/internal/api/publisher"
 	"github.com/vadimpk/image-resizing-server-go/internal/api/repository"
+	"mime/multipart"
 )
 
 type Services struct {
@@ -11,16 +13,16 @@ type Services struct {
 }
 
 type Uploading interface {
-	Upload(file []byte) (string, error)
+	Upload(file multipart.File, headers *multipart.FileHeader) (string, error)
 }
 
 type Downloading interface {
-	Download(ID string) ([]byte, error) // TODO: return image instead of bytes
+	Download(id string) ([]byte, error) // TODO: return image instead of bytes
 }
 
-func NewServices(publisher publisher.Publisher, repository *repository.Repository) *Services {
+func NewServices(publisher publisher.Publisher, repository *repository.Repository, sid *shortid.Shortid) *Services {
 	return &Services{
-		Uploading:   NewUploadingService(publisher),
+		Uploading:   NewUploadingService(publisher, sid),
 		Downloading: NewDownloadingService(repository),
 	}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/teris-io/shortid"
 	"github.com/vadimpk/image-resizing-server-go/internal/api/config"
 	"github.com/vadimpk/image-resizing-server-go/internal/api/delivery/http"
 	"github.com/vadimpk/image-resizing-server-go/internal/api/publisher"
@@ -36,7 +37,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	services := service.NewServices(p, repository.NewRepository())
+	sid, err := shortid.New(1, shortid.DefaultABC, 4512)
+	if err != nil {
+		log.Fatalf("couldn't start random id generator: [%s]\n", err)
+	}
+
+	services := service.NewServices(p, repository.NewRepository(), sid)
 
 	handler := http.NewHandler(services)
 	r := handler.Init()
