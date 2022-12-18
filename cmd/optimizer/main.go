@@ -52,14 +52,14 @@ func main() {
 		}
 	}()
 
-	defer shutdown(cancel)
+	defer shutdown(cancel, cfg.Timeout)
 	waitShutdown()
 }
 
 // shutdown gracefully stops all services after given timeout
-func shutdown(cancel context.CancelFunc) {
+func shutdown(cancel context.CancelFunc, timeout time.Duration) {
 	cancel()
-	ctx, cancelTimeout := context.WithTimeout(context.Background(), time.Second*30)
+	ctx, cancelTimeout := context.WithTimeout(context.Background(), timeout)
 	defer cancelTimeout()
 
 	doneRabbit := c.Close(ctx)
