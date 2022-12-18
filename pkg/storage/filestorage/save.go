@@ -1,6 +1,7 @@
 package filestorage
 
 import (
+	"errors"
 	"image"
 	"image/jpeg"
 	"image/png"
@@ -13,9 +14,12 @@ func (s *Storage) Save(id string, image image.Image, resolution int, imgType str
 	s.wg.Add(1)
 	defer s.wg.Done()
 
+	dir := s.dir + id + "/"
+
 	switch imgType {
 	case "image/jpeg":
-		file, err := os.Create(s.dir + s.getImgName(id, resolution) + ".jpeg")
+		_ = os.Mkdir(dir, os.ModePerm)
+		file, err := os.Create(dir + s.getImgName(id, resolution) + ".jpeg")
 		if err != nil {
 			return err
 		}
@@ -26,7 +30,8 @@ func (s *Storage) Save(id string, image image.Image, resolution int, imgType str
 			return err
 		}
 	case "image/png":
-		file, err := os.Create(s.dir + s.getImgName(id, resolution) + ".png")
+		_ = os.Mkdir(dir, os.ModePerm)
+		file, err := os.Create(dir + s.getImgName(id, resolution) + ".png")
 		if err != nil {
 			return err
 		}
@@ -36,6 +41,8 @@ func (s *Storage) Save(id string, image image.Image, resolution int, imgType str
 		if err != nil {
 			return err
 		}
+	default:
+		return errors.New("unsupported image type for saving")
 	}
 	return nil
 }
