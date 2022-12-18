@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"github.com/teris-io/shortid"
-	_ "github.com/teris-io/shortid"
 	"github.com/vadimpk/image-resizing-server-go/internal/api/publisher"
 	"io/ioutil"
 	"log"

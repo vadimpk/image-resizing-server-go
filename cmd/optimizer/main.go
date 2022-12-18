@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"github.com/vadimpk/image-resizing-server-go/internal/api/repository"
 	"github.com/vadimpk/image-resizing-server-go/internal/optimizer/consumer"
+	"github.com/vadimpk/image-resizing-server-go/internal/optimizer/repository"
 	"github.com/vadimpk/image-resizing-server-go/internal/optimizer/services"
 	"github.com/vadimpk/image-resizing-server-go/pkg/queue/rabbitmq"
 	rabbitconsumer "github.com/vadimpk/image-resizing-server-go/pkg/queue/rabbitmq/consumer"
+	"github.com/vadimpk/image-resizing-server-go/pkg/storage/filestorage"
 	"log"
 	"os"
 	"os/signal"
@@ -16,7 +17,9 @@ import (
 
 func main() {
 
-	repo := repository.NewRepository()
+	var repo repository.Repository
+	repo = filestorage.NewStorage()
+
 	var service services.Service
 	service = services.NewOptimizer(repo)
 
@@ -41,19 +44,20 @@ func main() {
 		}
 	}()
 
-	defer shutdown(cancel, c)
+	defer shutdown(cancel, c, repo)
 
 	waitShutdown()
 }
 
-func shutdown(cancel context.CancelFunc, c consumer.Consumer) {
+func shutdown(cancel context.CancelFunc, c consumer.Consumer, r repository.Repository) {
 	cancel()
 	ctx, cancelTimeout := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancelTimeout()
 
 	doneRabbit := c.Close(ctx)
+	doneRepo := r.Close(ctx)
 
-	waitUntilIsDoneOrCanceled(ctx, doneRabbit)
+	waitUntilIsDoneOrCanceled(ctx, doneRabbit, doneRepo)
 	time.Sleep(time.Millisecond * 200)
 }
 
