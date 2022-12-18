@@ -56,7 +56,7 @@ func main() {
 	handler = http.NewHandler(services, cfg.Server.MaxFileSizeMB)
 	r := handler.Init()
 
-	srv = server.NewServer(r)
+	srv = server.NewServer(cfg, r)
 
 	_, cancel := context.WithCancel(context.Background())
 

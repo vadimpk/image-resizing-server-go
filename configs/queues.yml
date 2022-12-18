@@ -5,4 +5,4 @@ rabbitmq-img-queue:
   exclusive: false
   no-wait: false
   prefetch-count: 1
-  auto-ack: true
+  auto-ack: false

@@ -94,7 +94,9 @@ func (c *Consumer) Consume(ctx context.Context, f func(body []byte, headers map[
 
 			c.rabbit.Wg.Add(1)
 			f(msg.Body, msg.Headers)
-			// no need to ack as auto-ack is enabled
+			if err := msg.Ack(false); err != nil {
+				log.Printf("error acking message: %s\n", err)
+			}
 			c.rabbit.Wg.Done()
 
 		case <-ctx.Done():

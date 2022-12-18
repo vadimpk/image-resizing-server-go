@@ -15,11 +15,11 @@ type (
 	}
 
 	ServerConfig struct {
-		Port               string        `mapstructure:"port"`
-		ReadTimeout        time.Duration `mapstructure:"readTimeout"`
-		WriteTimeout       time.Duration `mapstructure:"writeTimeout"`
-		MaxHeaderMegabytes int           `mapstructure:"maxHeaderBytes"`
-		MaxFileSizeMB      int64         `mapstructure:"maxFileSizeMB"`
+		Port          string        `mapstructure:"port"`
+		ReadTimeout   time.Duration `mapstructure:"readTimeout"`
+		WriteTimeout  time.Duration `mapstructure:"writeTimeout"`
+		MaxHeaderMB   int           `mapstructure:"maxHeaderBytes"`
+		MaxFileSizeMB int64         `mapstructure:"maxFileSizeMB"`
 	}
 
 	RabbitMQConfig struct {
