@@ -10,8 +10,8 @@ type Storage struct {
 	wg  *sync.WaitGroup
 }
 
-func NewStorage() *Storage {
-	return &Storage{dir: "images/", wg: &sync.WaitGroup{}}
+func NewStorage(dirPath string) *Storage {
+	return &Storage{dir: dirPath, wg: &sync.WaitGroup{}}
 }
 
 func (s *Storage) Close(ctx context.Context) chan struct{} {

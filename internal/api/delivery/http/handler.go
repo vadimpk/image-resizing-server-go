@@ -14,11 +14,12 @@ import (
 )
 
 type Handler struct {
-	service *service.Services
+	service       *service.Services
+	maxFileSizeMB int64
 }
 
-func NewHandler(services *service.Services) *Handler {
-	return &Handler{services}
+func NewHandler(services *service.Services, maxFileSizeMB int64) *Handler {
+	return &Handler{services, maxFileSizeMB}
 }
 
 func (h *Handler) Init() http.Handler {
@@ -32,7 +33,7 @@ func (h *Handler) Init() http.Handler {
 
 func (h *Handler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 
-	err := r.ParseMultipartForm(32 << 20) // maxMemory 32MB
+	err := r.ParseMultipartForm(h.maxFileSizeMB << 20)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return

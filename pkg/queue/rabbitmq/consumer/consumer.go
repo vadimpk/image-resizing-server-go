@@ -10,13 +10,14 @@ import (
 type Consumer struct {
 	rabbit     *rabbitmq.RabbitMQ
 	routingKey string
+	cfg        *rabbitmq.QueueConfig
 }
 
 func NewConsumer(rabbit *rabbitmq.RabbitMQ) (*Consumer, error) {
 
-	cfg, err := Init("configs/queues")
+	cfg, err := rabbitmq.Init("configs/queues")
 	if err != nil {
-		log.Println("couldn't init rabbitmq/producer config")
+		log.Println("couldn't init rabbitmq/consumer config")
 		return nil, err
 	}
 
@@ -34,19 +35,20 @@ func NewConsumer(rabbit *rabbitmq.RabbitMQ) (*Consumer, error) {
 		nil,
 	)
 	if err != nil {
-		log.Printf("Couldn't create RabbitMQ queue: [%s]\n", err)
+		log.Printf("couldn't create RabbitMQ queue: [%s]\n", err)
 		return nil, err
 	}
 
 	err = rabbit.Channel.Qos(cfg.PrefetchCount, 0, false)
 	if err != nil {
-		log.Printf("Couldn't set Qos: [%s]\n", err)
+		log.Printf("couldn't set Qos: [%s]\n", err)
 		return nil, err
 	}
 
 	c := &Consumer{
 		rabbit:     rabbit,
 		routingKey: q.Name,
+		cfg:        cfg,
 	}
 
 	return c, nil
@@ -56,6 +58,8 @@ func (c *Consumer) Close(ctx context.Context) chan struct{} {
 	return c.rabbit.Close(ctx)
 }
 
+// Consume consumes messages from channel and applies func f to each message
+// if context gets cancelled, it tries to process last message and then stops channel
 func (c *Consumer) Consume(ctx context.Context, f func(body []byte, headers map[string]interface{})) error {
 
 	// TODO: create new channel (reconnect)
@@ -67,13 +71,13 @@ func (c *Consumer) Consume(ctx context.Context, f func(body []byte, headers map[
 	defer c.rabbit.Wg.Done()
 
 	msgs, err := c.rabbit.Channel.Consume(
-		c.routingKey, // queue
-		"",           // consumer
-		false,        // auto-ack
-		false,        // exclusive
-		false,        // no-local
-		false,        // no-wait
-		nil,          // args
+		c.routingKey,
+		"",
+		c.cfg.AutoAck,
+		c.cfg.Exclusive,
+		false,
+		c.cfg.NoWait,
+		nil,
 	)
 
 	if err != nil {
@@ -87,18 +91,18 @@ func (c *Consumer) Consume(ctx context.Context, f func(body []byte, headers map[
 				return errors.New("error receiving message from channel ")
 			}
 			log.Println("Consumed message")
+
 			c.rabbit.Wg.Add(1)
 			f(msg.Body, msg.Headers)
-			if err := msg.Ack(false); err != nil {
-				log.Printf("error acking message: %s\n", err)
-			}
+			// no need to ack as auto-ack is enabled
 			c.rabbit.Wg.Done()
 
 		case <-ctx.Done():
+			// if context is cancelled, try to process last message, then stop
 			if allCanceled {
 				return nil
 			}
-			err = c.rabbit.Channel.Cancel(c.routingKey, false)
+			err = c.rabbit.Channel.Cancel(c.routingKey, false) // stop receiving
 			allCanceled = true
 			continue
 		}

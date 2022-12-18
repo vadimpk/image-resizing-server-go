@@ -38,7 +38,7 @@ func NewServer(handler http.Handler) *Server {
 
 func (s *Server) Run() {
 	go func() {
-		log.Println("Starting http server...")
+		log.Println("Starting http server")
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("couldn't start the server: [%s]\n", err)
 		}

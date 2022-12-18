@@ -16,7 +16,7 @@ type Producer struct {
 
 func NewProducer(rabbit *rabbitmq.RabbitMQ) (*Producer, error) {
 
-	cfg, err := Init("configs/queues")
+	cfg, err := rabbitmq.Init("configs/queues")
 	if err != nil {
 		log.Println("couldn't init rabbitmq/producer config")
 		return nil, err
@@ -36,7 +36,7 @@ func NewProducer(rabbit *rabbitmq.RabbitMQ) (*Producer, error) {
 		nil,
 	)
 	if err != nil {
-		log.Printf("Couldn't create RabbitMQ publisher: [%s]\n", err)
+		log.Printf("couldn't create RabbitMQ queue: [%s]\n", err)
 		return nil, err
 	}
 
@@ -59,7 +59,7 @@ func (p *Producer) Publish(ctx context.Context, body []byte, headers map[string]
 		return errors.New("RabbitMQ channel not found when publishing message")
 	}
 
-	log.Printf("Publishing message to publisher: %s\n", p.routingKey)
+	log.Printf("Publishing message to queue: %s\n", p.routingKey)
 
 	p.rabbit.Wg.Add(1)
 	defer p.rabbit.Wg.Done()
@@ -71,25 +71,15 @@ func (p *Producer) Publish(ctx context.Context, body []byte, headers map[string]
 		false,
 		false,
 		amqp.Publishing{
-			Headers:         headers,
-			ContentType:     "",
-			ContentEncoding: "",
-			DeliveryMode:    0,
-			Priority:        0,
-			CorrelationId:   "",
-			ReplyTo:         "",
-			Expiration:      "",
-			MessageId:       "",
-			Timestamp:       time.Now(),
-			Type:            "",
-			UserId:          "",
-			AppId:           "",
-			Body:            body,
+			Headers:      headers,
+			DeliveryMode: amqp.Persistent,
+			Timestamp:    time.Now(),
+			Body:         body,
 		},
 	)
 	// TODO: resend
 	if err != nil {
-		log.Printf("Couldn't publish message to %s publisher: [%s]\n", p.routingKey, err)
+		log.Printf("couldn't publish message to %s publisher: [%s]\n", p.routingKey, err)
 		return err
 	}
 	log.Println("Message published")

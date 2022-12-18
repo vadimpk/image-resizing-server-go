@@ -8,18 +8,9 @@ import (
 
 type (
 	Config struct {
-		Server ServerConfig
 		Rabbit RabbitMQConfig
 		Main
 		FileStorage
-	}
-
-	ServerConfig struct {
-		Port               string        `mapstructure:"port"`
-		ReadTimeout        time.Duration `mapstructure:"readTimeout"`
-		WriteTimeout       time.Duration `mapstructure:"writeTimeout"`
-		MaxHeaderMegabytes int           `mapstructure:"maxHeaderBytes"`
-		MaxFileSizeMB      int64         `mapstructure:"maxFileSizeMB"`
 	}
 
 	RabbitMQConfig struct {
@@ -27,12 +18,12 @@ type (
 		Port string
 	}
 
-	FileStorage struct {
-		DirPath string `mapstructure:"dir"`
-	}
-
 	Main struct {
 		Timeout time.Duration `mapstructure:"graceful-timeout"`
+	}
+
+	FileStorage struct {
+		DirPath string `mapstructure:"dir"`
 	}
 )
 
@@ -59,9 +50,6 @@ func parseConfigPath(filepath string) error {
 }
 
 func unmarshal(cfg *Config) error {
-	if err := viper.UnmarshalKey("http", &cfg.Server); err != nil {
-		return err
-	}
 	if err := viper.UnmarshalKey("rabbitmq", &cfg.Rabbit); err != nil {
 		return err
 	}

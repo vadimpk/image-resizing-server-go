@@ -1,4 +1,4 @@
-package consumer
+package rabbitmq
 
 import (
 	"github.com/spf13/viper"
@@ -12,6 +12,7 @@ type QueueConfig struct {
 	Exclusive     bool   `mapstructure:"exclusive"`
 	NoWait        bool   `mapstructure:"no-wait"`
 	PrefetchCount int    `mapstructure:"prefetch-count"`
+	AutoAck       bool   `mapstructure:"auto-ack"`
 }
 
 func Init(configPath string) (*QueueConfig, error) {

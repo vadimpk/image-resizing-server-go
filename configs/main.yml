@@ -3,7 +3,14 @@ http:
   maxHeaderBytes: 1
   readTimeout: 30s
   writeTimeout: 30s
+  maxFileSizeMB: 20
   
 rabbitmq:
   url: "amqp://guest:guest@localhost:"
   port: 5672
+  
+main:
+  graceful-timeout: 30s
+  
+file-storage:
+  dir: "images/"

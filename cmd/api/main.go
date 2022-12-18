@@ -19,6 +19,14 @@ import (
 	"time"
 )
 
+var (
+	repo     repository.Repository
+	services *service.Services
+	handler  *http.Handler
+	srv      *server.Server
+	pub      publisher.Publisher
+)
+
 func main() {
 
 	cfg, err := config.Init("configs/main")
@@ -29,51 +37,48 @@ func main() {
 	rabbit := rabbitmq.NewRabbitMQ()
 	err = rabbit.Connect(cfg.Rabbit.URL + cfg.Rabbit.Port + "/")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("couldn't connect to RabbitMQ: []%s\n", err)
 	}
 
-	var p publisher.Publisher
-	p, err = producer.NewProducer(rabbit)
+	pub, err = producer.NewProducer(rabbit)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("couldn't initialize queue producer: [%s]\n", err)
 	}
 
 	sid, err := shortid.New(1, shortid.DefaultABC, 4512)
 	if err != nil {
-		log.Fatalf("couldn't start random id generator: [%s]\n", err)
+		log.Fatalf("couldn't create random id generator: [%s]\n", err)
 	}
 
-	var repo repository.Repository
-	repo = filestorage.NewStorage()
+	repo = filestorage.NewStorage(cfg.FileStorage.DirPath)
+	services = service.NewServices(pub, repo, sid)
 
-	services := service.NewServices(p, repo, sid)
-
-	handler := http.NewHandler(services)
+	handler = http.NewHandler(services, cfg.Server.MaxFileSizeMB)
 	r := handler.Init()
 
-	srv := server.NewServer(r)
+	srv = server.NewServer(r)
 
 	_, cancel := context.WithCancel(context.Background())
 
 	srv.Run()
-
-	defer shutdown(cancel, srv, p)
-
+	defer shutdown(cancel, cfg.Main.Timeout)
 	waitShutdown()
 }
 
-func shutdown(cancel context.CancelFunc, srv *server.Server, p publisher.Publisher) {
+// shutdown gracefully stops all services after given timeout
+func shutdown(cancel context.CancelFunc, timeout time.Duration) {
 	cancel()
-	ctx, cancelTimeout := context.WithTimeout(context.Background(), time.Second*30)
+	ctx, cancelTimeout := context.WithTimeout(context.Background(), time.Second*timeout)
 	defer cancelTimeout()
 
 	doneHTTP := srv.Stop(ctx)
-	doneRabbit := p.Close(ctx)
+	doneRabbit := pub.Close(ctx)
 
 	waitUntilIsDoneOrCanceled(ctx, doneHTTP, doneRabbit)
 	time.Sleep(time.Millisecond * 200)
 }
 
+// waitShutdown waits for stop signal to stop the program
 func waitShutdown() {
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
@@ -81,6 +86,8 @@ func waitShutdown() {
 	log.Printf("signal [%v] received, canceling everything...\n", s)
 }
 
+// waitUntilIsDoneOrCanceled implements graceful shutdown, it waits for all the processes to be finished
+// or for the context to timeout
 func waitUntilIsDoneOrCanceled(ctx context.Context, dones ...chan struct{}) {
 	done := make(chan struct{})
 	go func() {
@@ -91,8 +98,8 @@ func waitUntilIsDoneOrCanceled(ctx context.Context, dones ...chan struct{}) {
 	}()
 	select {
 	case <-done:
-		log.Println("all done")
+		log.Println("All processes finished")
 	case <-ctx.Done():
-		log.Println("canceled")
+		log.Println("Some processes were killed after delay")
 	}
 }
