@@ -1,10 +1,16 @@
 # image-resizing-server-go
-HTTP API for uploading, optimizing, and serving images.
-Written in Go. Application consists of 2 parts: HTTP API server for uploading and downloading images and server for optimizing and resizing images. Images are sent from HTTP server for optimizing via RabbitMq queue.
-Image optimization in this realization is simple resizing into smaller size images (75%, 50% and 25% from original size).
+HTTP API for uploading, optimizing, and serving images. Written in Go. 
+
+Application consists of 2 services: an HTTP server for uploading and downloading images and an optimizing service for resizing images.
+Images are sent from the HTTP server to the optimizing service via the RabbitMq queue after uploading.
+\
+Local file storage is used as a repository for storing images. 
+Image optimization is simply resizing into smaller-sized images (75%, 50%, and 25% from original size).
 
 ## usage
-To run locally, you need RabbitMq server running. You can execute `make run-rabbit` – that will start RabbitMq docker container on ports 5672 and 15672 on your local machine. If you'd like to start your own RabbitMq server, please make sure to change configuration files in `configs/` directory.
+To run locally, you need RabbitMq server running. You can execute `make run-rabbit` which will start RabbitMq docker container on ports 5672 and 15672 on your local machine.
+If you'd like to start your own RabbitMq server, please make sure to change configuration files in `configs/` directory.
+\
 Then run
 ```
 make run-api
@@ -12,12 +18,27 @@ make run-opt
 ```
 It will start HTTP API and optimization servers respectively.
 
+In `configs/` directory you can set the directory for optimized images to be saved into (default `images/`). 
+
+## uploading / downloading
+Open `index.html` to manually upload images to server or run:
+```
+go run client.go --filename <your-img-filename> --times <number-of-requests-to-send>
+```
+to run any amount of requests to the server with the same specified image (default `test-img.jpg`).
+
+To download visit `/download/{img-id}?quality=100/75/50/25` endpoint of HTTP server in your browser.
+
 ## clean code
-Application was built with clean code principles in mind. Everything inside both API and optimization servers relies upon interfaces (publisher/consumer, services, repository). It is no trouble to replace some components with other using different libraries or technologies.
-For example, currently application uses file storage implementation of repository, but as Repository interface is used, it can be replaced with real database easily.
+Application was built with clean code principles in mind.
+Everything inside both API and optimization servers relies upon interfaces (publisher/consumer, services, repository).
+It is no trouble to replace some components with others using different libraries or technologies.
+\
+For example, currently, application uses file storage implementation of a repository, but as `Repository` interface is used, it can be replaced with a real database easily.
 
 ## graceful shutdown
-Both servers may perform difficult and time consuming operations (sending, receiving and optimizing images), so in order to prevent data loss when server is being stopped, graceful shutdown was implemented. It waits for all started proccesses to finish and only then stops application (or waits for timeout if running proccesses can't be finished fast enough)
+Both servers may perform difficult and time-consuming operations (sending, receiving, and optimizing images), so in order to prevent data loss when server is being stopped, graceful shutdown was implemented.
+It waits for all started processes to finish and only then stops the application (or waits for timeout if running processes can't be finished fast enough).
 
 ## stack
   - [github.com/gorilla/mux](github.com/gorilla/mux)
